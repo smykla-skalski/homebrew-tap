@@ -24,8 +24,9 @@ class Klab < Formula
 
   def install
     if Hardware::CPU.arm?
-      # Tarball extracts to klab/ directory containing the binary and dependencies
-      libexec.install Dir["klab/*"]
+      # Homebrew auto-cd's into the single top-level directory (klab/)
+      # Install all contents (_internal/ and klab executable) to libexec
+      libexec.install Dir["*"]
       bin.install_symlink libexec/"klab"
     else
       odie "klab only supports Apple Silicon (arm64) on macOS"
