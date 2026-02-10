@@ -24,8 +24,8 @@ class Klab < Formula
 
   def install
     if Hardware::CPU.arm?
-      # Homebrew auto-cd's into the single top-level directory (klab/)
-      # Install all contents (_internal/ and klab executable) to libexec
+      # Tarball extracts to cxfreeze/ directory (built with cx_Freeze)
+      # Install all contents (lib/ and klab executable) to libexec
       libexec.install Dir["*"]
       bin.install_symlink libexec/"klab"
     else
