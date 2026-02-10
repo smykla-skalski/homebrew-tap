@@ -63,10 +63,11 @@ class GitHubPrivateRepositoryReleaseDownloadStrategy < CurlDownloadStrategy
   def validate_github_repository_access!
     # Test access to the repository
     GitHub.repository(@owner, @repo)
-  rescue GitHub::API::HTTPNotFoundError, GitHub::Error
+  rescue StandardError => e
     message = <<~EOS
       HOMEBREW_GITHUB_API_TOKEN cannot access the repository: #{@owner}/#{@repo}
       This token may not have permission to access the repository or the URL may be incorrect.
+      Error: #{e.message}
     EOS
     raise CurlDownloadStrategyError, message
   end
