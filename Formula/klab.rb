@@ -12,9 +12,9 @@ class Klab < Formula
 
   on_macos do
     on_arm do
-      url "https://github.com/smykla-skalski/klab/releases/download/v0.1.0/klab-darwin-arm64",
+      url "https://github.com/smykla-skalski/klab/releases/download/v0.1.0/klab-darwin-arm64.tar.gz",
           using: GitHubPrivateRepositoryReleaseDownloadStrategy
-      sha256 "075f7af07a5e6682783aad672f61e24bf6ed8f7a1a51de1578dbac907f70120e"
+      sha256 "PLACEHOLDER_HASH_WILL_BE_UPDATED_BY_CI"
     end
   end
 
@@ -24,7 +24,9 @@ class Klab < Formula
 
   def install
     if Hardware::CPU.arm?
-      bin.install "klab-darwin-arm64" => "klab"
+      # Tarball extracts to klab/ directory containing the binary and dependencies
+      libexec.install Dir["klab/*"]
+      bin.install_symlink libexec/"klab"
     else
       odie "klab only supports Apple Silicon (arm64) on macOS"
     end
