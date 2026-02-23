@@ -23,14 +23,7 @@ class Klab < Formula
   # that has 'repo' scope access to smykla-skalski/klab
 
   def install
-    if Hardware::CPU.arm?
-      # Tarball extracts to cxfreeze/ directory (built with cx_Freeze)
-      # Install all contents (lib/ and klab executable) to libexec
-      libexec.install Dir["*"]
-      bin.install_symlink libexec/"klab"
-    else
-      odie "klab only supports Apple Silicon (arm64) on macOS"
-    end
+    bin.install "klab"
   end
 
   test do
