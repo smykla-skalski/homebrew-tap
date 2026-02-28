@@ -5,13 +5,13 @@
 class Klaudiush < Formula
   desc "Validation dispatcher for Claude Code hooks"
   homepage "https://github.com/smykla-skalski/klaudiush"
-  version "1.26.4"
+  version "1.26.5"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/smykla-skalski/klaudiush/releases/download/v1.26.4/klaudiush_1.26.4_darwin_amd64.tar.gz"
-      sha256 "0b8cfeab3d6311e3a5a3679df41ec5d4b300c8630893908d734eb7a3648b718c"
+      url "https://github.com/smykla-skalski/klaudiush/releases/download/v1.26.5/klaudiush_1.26.5_darwin_amd64.tar.gz"
+      sha256 "fb605ad4334f63c694baaa6905d8650737d291537bdddd019377a4304da348ea"
 
       define_method(:install) do
         bin.install "klaudiush"
@@ -19,8 +19,8 @@ class Klaudiush < Formula
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/smykla-skalski/klaudiush/releases/download/v1.26.4/klaudiush_1.26.4_darwin_arm64.tar.gz"
-      sha256 "f18efa683fb54b25876db7cefeec1c349d4a29608abff00f901dfd4e2dac5a55"
+      url "https://github.com/smykla-skalski/klaudiush/releases/download/v1.26.5/klaudiush_1.26.5_darwin_arm64.tar.gz"
+      sha256 "303487fded718c9bafc1ab607d4679b7d8dff7de1761fb0262dd81499fa2c354"
 
       define_method(:install) do
         bin.install "klaudiush"
@@ -31,16 +31,16 @@ class Klaudiush < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/smykla-skalski/klaudiush/releases/download/v1.26.4/klaudiush_1.26.4_linux_amd64.tar.gz"
-      sha256 "0e2483ceaaa570cd7cfa6b9fe6cb683be3aeb05fe0579eb237c766d1ef091def"
+      url "https://github.com/smykla-skalski/klaudiush/releases/download/v1.26.5/klaudiush_1.26.5_linux_amd64.tar.gz"
+      sha256 "d6ff8c2e4a2bdb402bf78c18e3661631abb72fccefafdf8227e673d6f8022136"
       define_method(:install) do
         bin.install "klaudiush"
         generate_completions_from_executable(bin/"klaudiush", "completion")
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/smykla-skalski/klaudiush/releases/download/v1.26.4/klaudiush_1.26.4_linux_arm64.tar.gz"
-      sha256 "772935831edb4d603ae4c7820fa947141db71c412306c477804371025a720168"
+      url "https://github.com/smykla-skalski/klaudiush/releases/download/v1.26.5/klaudiush_1.26.5_linux_arm64.tar.gz"
+      sha256 "7f1a66a8ce889000b8b9bcf3a4bcb33393132ac9443f36af39b87ee43aa55aa1"
       define_method(:install) do
         bin.install "klaudiush"
         generate_completions_from_executable(bin/"klaudiush", "completion")
