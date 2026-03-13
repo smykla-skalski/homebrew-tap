@@ -123,7 +123,9 @@ jobs:
 
             def install
               bin.install "af"
-              generate_completions_from_executable(bin / "af", "completions")
+              bash_completion.install "completions/af.bash" => "af"
+              fish_completion.install "completions/af.fish"
+              zsh_completion.install "completions/_af"
               man1.install "af.1"
             end
 
