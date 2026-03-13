@@ -19,8 +19,19 @@ jobs:
     runs-on: macos-latest
 
     steps:
+      - name: Generate Homebrew Tap GitHub App token
+        id: homebrew-tap-token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf  # v2.2.1
+        with:
+          app-id: ${{ vars.SMYKLOT_APP_ID }}
+          private-key: ${{ secrets.SMYKLOT_APP_PRIVATE_KEY }}
+          owner: smykla-skalski
+          repositories: homebrew-tap
+
       - name: Checkout tap
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          token: ${{ steps.homebrew-tap-token.outputs.token }}
 
       - name: Generate GitHub App token
         id: github-app-token
@@ -30,6 +41,13 @@ jobs:
           private-key: ${{ secrets.SMYKLOT_APP_PRIVATE_KEY }}
           owner: smykla-skalski
           repositories: klab
+
+      - name: Get Homebrew Tap GitHub App user ID
+        id: github-app-user
+        env:
+          APP_SLUG: ${{ steps.homebrew-tap-token.outputs.app-slug }}
+          GH_TOKEN: ${{ steps.homebrew-tap-token.outputs.token }}
+        run: echo "user-id=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
 
       - name: Set version
         id: version
@@ -81,12 +99,14 @@ jobs:
 
       - name: Commit and push
         env:
+          APP_SLUG: ${{ steps.homebrew-tap-token.outputs.app-slug }}
+          USER_ID: ${{ steps.github-app-user.outputs.user-id }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${USER_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
           git add Formula/klab.rb
           git diff --staged --quiet && exit 0
           git commit -m "chore(formula): update klab to v${VERSION}" \
             -m "Automated update triggered by klab release v${VERSION}"
-          git push
+          git push origin HEAD:main

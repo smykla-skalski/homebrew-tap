@@ -19,8 +19,26 @@ jobs:
     runs-on: macos-latest
 
     steps:
+      - name: Generate Homebrew Tap GitHub App token
+        id: homebrew-tap-token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+        with:
+          app-id: ${{ vars.SMYKLOT_APP_ID }}
+          private-key: ${{ secrets.SMYKLOT_APP_PRIVATE_KEY }}
+          owner: smykla-skalski
+          repositories: homebrew-tap
+
+      - name: Get GitHub App user ID
+        id: github-app-user
+        env:
+          APP_SLUG: ${{ steps.homebrew-tap-token.outputs.app-slug }}
+          GH_TOKEN: ${{ steps.homebrew-tap-token.outputs.token }}
+        run: echo "user-id=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+
       - name: Checkout tap
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          token: ${{ steps.homebrew-tap-token.outputs.token }}
 
       - name: Set version
         id: version
@@ -113,26 +131,36 @@ jobs:
           EOF
 
       - name: Validate formula
+        env:
+          RUN_ID: ${{ github.run_id }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          temp_tap="codex-local/af-validation"
+          temp_tap="codex-local/af-validation-${RUN_ID}"
+          cleanup() {
+            HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_FROM_API=1 brew uninstall "${temp_tap}/af" >/dev/null 2>&1 || true
+            brew untap "${temp_tap}" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
 
           brew tap-new "${temp_tap}"
           cp Formula/af.rb "$(brew --repository "${temp_tap}")/Formula/af.rb"
 
-          HOMEBREW_NO_INSTALL_FROM_API=1 brew audit --strict "${temp_tap}/af"
-          HOMEBREW_NO_INSTALL_FROM_API=1 brew install "${temp_tap}/af"
-          "$(brew --prefix "${temp_tap}/af")/bin/af" --version
-          brew uninstall "${temp_tap}/af"
-          brew untap "${temp_tap}"
+          HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_FROM_API=1 brew audit --strict "${temp_tap}/af"
+          HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_FROM_API=1 brew install "${temp_tap}/af"
+
+          actual_version="$("$(brew --cellar af)/${VERSION}/bin/af" --version | awk '{print $2}')"
+          test "$actual_version" = "$VERSION"
 
       - name: Commit and push
         env:
+          APP_SLUG: ${{ steps.homebrew-tap-token.outputs.app-slug }}
+          USER_ID: ${{ steps.github-app-user.outputs.user-id }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${USER_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
           git add Formula/af.rb
           git diff --staged --quiet && exit 0
           git commit -m "chore(formula): update af to v${VERSION}" \
             -m "Automated update triggered by af release v${VERSION}"
-          git push
+          git push origin HEAD:main
