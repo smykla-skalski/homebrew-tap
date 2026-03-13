@@ -16,6 +16,11 @@ This tap contains Homebrew formulas for various open-source projects:
   - Repository: Public
   - Update method: GoReleaser
 
+- **[af](https://github.com/smykla-skalski/af)** - CLI helpers for project cloning, dotfiles, shortcuts, and browser workflows
+  - Status: Active
+  - Repository: Public
+  - Update method: GitHub Actions workflow
+
 ## Installation
 
 ### From This Tap
@@ -25,6 +30,7 @@ This tap contains Homebrew formulas for various open-source projects:
 brew install smykla-skalski/tap/<formula-name>
 
 # Examples:
+brew install smykla-skalski/tap/af
 brew install smykla-skalski/tap/klab
 brew install smykla-skalski/tap/klaudiush
 ```
@@ -48,6 +54,9 @@ brew install smykla-skalski/tap/klab
 After installation, verify the formula works:
 
 ```bash
+# af
+af --version
+
 # klab
 klab version
 
@@ -65,6 +74,7 @@ brew update
 brew upgrade <formula-name>
 
 # Examples:
+brew upgrade af
 brew upgrade klab
 brew upgrade klaudiush
 ```
@@ -75,6 +85,7 @@ brew upgrade klaudiush
 brew uninstall <formula-name>
 
 # Examples:
+brew uninstall af
 brew uninstall klab
 brew uninstall klaudiush
 ```
@@ -114,6 +125,7 @@ For issues with specific projects:
 
 - **klab**: [smykla-skalski/klab/issues](https://github.com/smykla-skalski/klab/issues)
 - **klaudiush**: [smykla-skalski/klaudiush/issues](https://github.com/smykla-skalski/klaudiush/issues)
+- **af**: [smykla-skalski/af/issues](https://github.com/smykla-skalski/af/issues)
 
 For tap-related issues or to report formula problems: [Create an issue in this repository](https://github.com/smykla-skalski/homebrew-tap/issues)
 

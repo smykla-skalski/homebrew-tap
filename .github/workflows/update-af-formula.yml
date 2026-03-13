@@ -1,0 +1,138 @@
+name: Update af Formula
+
+on:
+  repository_dispatch:
+    types: [af-release]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to update to (for example 0.8.110)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  update-formula:
+    name: Update af formula
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout tap
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set version
+        id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          PAYLOAD_VERSION: ${{ github.event.client_payload.version }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            VERSION="$PAYLOAD_VERSION"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Download release artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release download "v${VERSION}" \
+            --repo smykla-skalski/af \
+            --pattern "af_${VERSION}_darwin_amd64.tar.gz" \
+            --pattern "af_${VERSION}_darwin_arm64.tar.gz" \
+            --pattern "af_${VERSION}_linux_amd64.tar.gz" \
+            --pattern "af_${VERSION}_linux_arm64.tar.gz"
+
+      - name: Calculate checksums
+        id: sha
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          {
+            echo "darwin_amd64=$(shasum -a 256 "af_${VERSION}_darwin_amd64.tar.gz" | awk '{print $1}')"
+            echo "darwin_arm64=$(shasum -a 256 "af_${VERSION}_darwin_arm64.tar.gz" | awk '{print $1}')"
+            echo "linux_amd64=$(shasum -a 256 "af_${VERSION}_linux_amd64.tar.gz" | awk '{print $1}')"
+            echo "linux_arm64=$(shasum -a 256 "af_${VERSION}_linux_arm64.tar.gz" | awk '{print $1}')"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Rewrite formula
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA_DARWIN_AMD64: ${{ steps.sha.outputs.darwin_amd64 }}
+          SHA_DARWIN_ARM64: ${{ steps.sha.outputs.darwin_arm64 }}
+          SHA_LINUX_AMD64: ${{ steps.sha.outputs.linux_amd64 }}
+          SHA_LINUX_ARM64: ${{ steps.sha.outputs.linux_arm64 }}
+        run: |
+          cat > Formula/af.rb <<EOF
+          # typed: false
+          # frozen_string_literal: true
+
+          class Af < Formula
+            desc "Afrael's CLI tool"
+            homepage "https://github.com/smykla-skalski/af"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              if Hardware::CPU.intel?
+                url "https://github.com/smykla-skalski/af/releases/download/v${VERSION}/af_${VERSION}_darwin_amd64.tar.gz"
+                sha256 "${SHA_DARWIN_AMD64}"
+              end
+              if Hardware::CPU.arm?
+                url "https://github.com/smykla-skalski/af/releases/download/v${VERSION}/af_${VERSION}_darwin_arm64.tar.gz"
+                sha256 "${SHA_DARWIN_ARM64}"
+              end
+            end
+
+            on_linux do
+              if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
+                url "https://github.com/smykla-skalski/af/releases/download/v${VERSION}/af_${VERSION}_linux_amd64.tar.gz"
+                sha256 "${SHA_LINUX_AMD64}"
+              end
+              if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
+                url "https://github.com/smykla-skalski/af/releases/download/v${VERSION}/af_${VERSION}_linux_arm64.tar.gz"
+                sha256 "${SHA_LINUX_ARM64}"
+              end
+            end
+
+            def install
+              bin.install "af"
+              generate_completions_from_executable(bin / "af", "completions")
+              man1.install "af.1"
+            end
+
+            test do
+              assert_match version.to_s, shell_output("#{bin}/af --version")
+            end
+          end
+          EOF
+
+      - name: Validate formula
+        run: |
+          temp_tap="codex-local/af-validation"
+
+          brew tap-new "${temp_tap}"
+          cp Formula/af.rb "$(brew --repository "${temp_tap}")/Formula/af.rb"
+
+          HOMEBREW_NO_INSTALL_FROM_API=1 brew audit --strict "${temp_tap}/af"
+          HOMEBREW_NO_INSTALL_FROM_API=1 brew install --build-from-source "${temp_tap}/af"
+          af --version
+          brew uninstall "${temp_tap}/af"
+          brew untap "${temp_tap}"
+
+      - name: Commit and push
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/af.rb
+          git diff --staged --quiet && exit 0
+          git commit -m "chore(formula): update af to v${VERSION}" \
+            -m "Automated update triggered by af release v${VERSION}"
+          git push
