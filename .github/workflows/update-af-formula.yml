@@ -120,8 +120,8 @@ jobs:
           cp Formula/af.rb "$(brew --repository "${temp_tap}")/Formula/af.rb"
 
           HOMEBREW_NO_INSTALL_FROM_API=1 brew audit --strict "${temp_tap}/af"
-          HOMEBREW_NO_INSTALL_FROM_API=1 brew install --build-from-source "${temp_tap}/af"
-          af --version
+          HOMEBREW_NO_INSTALL_FROM_API=1 brew install "${temp_tap}/af"
+          "$(brew --prefix "${temp_tap}/af")/bin/af" --version
           brew uninstall "${temp_tap}/af"
           brew untap "${temp_tap}"
 
