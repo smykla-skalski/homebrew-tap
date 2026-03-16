@@ -20,12 +20,12 @@ jobs:
   handle-command:
     name: Handle PR Command
     if: github.event.issue.pull_request && github.event.comment.user.type != 'Bot'
-    runs-on: ubuntu-24.04
+    runs-on: ${{ fromJSON(vars.RUNNER_LABEL || '["ubuntu-24.04"]') }}
 
     steps:
       - name: Generate GitHub App token
         id: generate-token
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+        uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
         with:
           app-id: ${{ vars.SMYKLOT_APP_ID }}
           private-key: ${{ secrets.SMYKLOT_APP_PRIVATE_KEY }}
