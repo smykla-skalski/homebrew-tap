@@ -4,28 +4,28 @@
 class Af < Formula
   desc "Afrael's CLI tool"
   homepage "https://github.com/smykla-skalski/af"
-  version "0.11.41"
+  version "0.11.42"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/smykla-skalski/af/releases/download/v0.11.41/af_0.11.41_darwin_amd64.tar.gz"
-      sha256 "6b65c91e54a634598865e98168611659f5710f356f2bef1ce661a4d79e63c5ca"
+      url "https://github.com/smykla-skalski/af/releases/download/v0.11.42/af_0.11.42_darwin_amd64.tar.gz"
+      sha256 "e16c7631133f1799e5d869a1443aea9e07a1868352b0499df96f978f5c576ff6"
     end
     if Hardware::CPU.arm?
-      url "https://github.com/smykla-skalski/af/releases/download/v0.11.41/af_0.11.41_darwin_arm64.tar.gz"
-      sha256 "9a3fa98d707e7432ff232a2e363e75dbae352eaa98f3fe5cacbb46d183c2079f"
+      url "https://github.com/smykla-skalski/af/releases/download/v0.11.42/af_0.11.42_darwin_arm64.tar.gz"
+      sha256 "a6c2418530a7691cb9b968a3d02ac1edda43109b6dc7cfb841ab3ca3203d2dbe"
     end
   end
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/smykla-skalski/af/releases/download/v0.11.41/af_0.11.41_linux_amd64.tar.gz"
-      sha256 "d881951fb3886069f6182082ea552b3172d22c444a0ee7755b4d1e99fa7ec622"
+      url "https://github.com/smykla-skalski/af/releases/download/v0.11.42/af_0.11.42_linux_amd64.tar.gz"
+      sha256 "b4330840455f3453da40868c69044aeb28822179f1107c49771420be2b4e9a2d"
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/smykla-skalski/af/releases/download/v0.11.41/af_0.11.41_linux_arm64.tar.gz"
-      sha256 "181967d62c0608bb571c4737454e2ca20dd22e76489d95508a96b30230097398"
+      url "https://github.com/smykla-skalski/af/releases/download/v0.11.42/af_0.11.42_linux_arm64.tar.gz"
+      sha256 "89d81256cda2c4be28d615afcaa9c2c4cb9860e5838b589356bf258b619a23f5"
     end
   end
 
