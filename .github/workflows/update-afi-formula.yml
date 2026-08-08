@@ -97,7 +97,7 @@ jobs:
           else
             VERSION="$PAYLOAD_VERSION"
           fi
-          if ! printf '%s' "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::'${VERSION}' is not a stable release version. The tap tracks X.Y.Z only."
             exit 1
           fi
@@ -129,9 +129,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          for archive in afi-*.tar.gz; do
-            gh attestation verify "${archive}" --repo smykla-skalski/afi
-          done
+          # Four independent round trips to the attestations API and the
+          # transparency log, so they run at once: measured 18.5s sequential
+          # against 4.5s here. xargs exits non-zero if any of them fails, so a
+          # bad archive still fails the step.
+          printf '%s\n' afi-*.tar.gz \
+            | xargs -P 4 -I{} gh attestation verify {} --repo smykla-skalski/afi
 
       - name: Calculate checksums
         id: sha
@@ -233,17 +236,20 @@ jobs:
             brew uninstall --force afi >/dev/null 2>&1 || true
             brew untap "${temp_tap}" >/dev/null 2>&1 || true
           }
+          # Up front as well as on exit. A leftover keg from another tap makes
+          # `brew install` print advice and exit 0, which would leave the
+          # assertion below reading a stale binary.
+          cleanup
           trap cleanup EXIT
 
           brew tap-new --no-git "${temp_tap}"
           cp Formula/afi.rb "$(brew --repository "${temp_tap}")/Formula/afi.rb"
 
+          # No separate `brew style`: with a formula named and `--strict`, audit
+          # runs the same RuboCop pass over a strict superset of the cops.
+          # Checked against Homebrew 6.0.15 by planting a Layout offence, which
+          # both reported identically.
           brew audit --strict "${temp_tap}/afi"
-          brew style "${temp_tap}/afi"
-
-          # A leftover keg from another tap makes `brew install` print advice and
-          # exit 0, which would leave the assertion below reading a stale binary.
-          brew uninstall --force afi >/dev/null 2>&1 || true
           brew install "${temp_tap}/afi"
 
           # Homebrew scans the version out of the URL, so this path existing is
