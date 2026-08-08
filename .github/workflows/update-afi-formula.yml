@@ -1,0 +1,268 @@
+name: Update afi Formula
+
+# Driven by smykla-skalski/afi, which sends the `afi-release` dispatch from the
+# last job of its release workflow and then waits for Formula/afi.rb to report
+# the new version. So a failure here is not silent: it turns that release run
+# red and names this workflow.
+#
+# The formula is rewritten in full from the template below rather than patched
+# with sed, so the committed file is always exactly this workflow's output and
+# a partial edit cannot survive into a release.
+#
+# Stable versions only. afi cuts prereleases as `X.Y.Z-rc.N` and deliberately
+# leaves them off `releases/latest`; putting one in the tap would upgrade every
+# `brew upgrade afi` onto a release candidate.
+
+on:
+  repository_dispatch:
+    types: [afi-release]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to update to, no leading v (for example 0.8.0)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# A second release arriving mid-run would race on Formula/afi.rb. Never cancel
+# one in flight: it may already have pushed.
+concurrency:
+  group: update-afi-formula
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Homebrew's auto-update is a multi-minute tax on a job that installs one
+  # dependency-free formula from a URL.
+  HOMEBREW_NO_AUTO_UPDATE: 1
+  HOMEBREW_NO_ENV_HINTS: 1
+
+jobs:
+  update-formula:
+    name: Update afi formula
+    # macOS because the validation below actually installs the formula, and the
+    # only build it can install here is the one this runner can execute.
+    runs-on: macos-latest
+
+    steps:
+      # Scoped to this repository but deliberately not to a permission.
+      #
+      # A `permission-contents: write` input mints a token carrying only that
+      # permission, which reads like the safer choice and is not: main-branch
+      # protection here requires a pull request with an approval, this app is
+      # listed as a bypass actor, and a permission-scoped token does not get the
+      # bypass. Measured in smykla-skalski/afi, whose release workflow started
+      # failing with "protected branch 'main' check failed: Changes must be made
+      # through a pull request" the first time that input was added, having
+      # written nothing, with the ruleset untouched since the releases that
+      # worked. The af and klab updaters here have always minted it unscoped.
+      - name: Generate Homebrew Tap GitHub App token
+        id: homebrew-tap-token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1 # zizmor: ignore[github-app]
+        with:
+          app-id: ${{ vars.SMYKLOT_APP_ID }}
+          private-key: ${{ secrets.SMYKLOT_APP_PRIVATE_KEY }}
+          owner: smykla-skalski
+          repositories: homebrew-tap
+
+      - name: Get GitHub App user ID
+        id: github-app-user
+        env:
+          APP_SLUG: ${{ steps.homebrew-tap-token.outputs.app-slug }}
+          GH_TOKEN: ${{ steps.homebrew-tap-token.outputs.token }}
+        run: echo "user-id=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+
+      # Credentials stay on this checkout on purpose: the last step pushes the
+      # formula over git and there is nothing else here to carry them.
+      - name: Checkout tap
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 # zizmor: ignore[artipacked]
+        with:
+          token: ${{ steps.homebrew-tap-token.outputs.token }}
+
+      # The version is interpolated into the formula further down, so it is
+      # checked for shape here rather than trusted. Stable SemVer only: no
+      # leading v, no prerelease, no build metadata.
+      - name: Set version
+        id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          PAYLOAD_VERSION: ${{ github.event.client_payload.version }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            VERSION="$PAYLOAD_VERSION"
+          fi
+          if ! printf '%s' "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::'${VERSION}' is not a stable release version. The tap tracks X.Y.Z only."
+            exit 1
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Updating afi to ${VERSION}"
+
+      # Four of afi's five targets. It also publishes a glibc build for x86_64
+      # Linux, which the formula skips: the musl builds are static and run on
+      # any glibc, so one archive per architecture covers all of Linux.
+      - name: Download release artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh release download "v${VERSION}" \
+            --repo smykla-skalski/afi \
+            --pattern "afi-x86_64-apple-darwin.tar.gz" \
+            --pattern "afi-aarch64-apple-darwin.tar.gz" \
+            --pattern "afi-x86_64-unknown-linux-musl.tar.gz" \
+            --pattern "afi-aarch64-unknown-linux-musl.tar.gz"
+
+      # The same check afi's README tells a user to run, run here so the tap
+      # only ever pins a checksum for an archive proven to have come out of
+      # afi's release workflow. Without it the formula would pin whatever the
+      # release page happened to be serving.
+      - name: Verify build provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for archive in afi-*.tar.gz; do
+            gh attestation verify "${archive}" --repo smykla-skalski/afi
+          done
+
+      - name: Calculate checksums
+        id: sha
+        run: |
+          set -euo pipefail
+          {
+            echo "darwin_amd64=$(shasum -a 256 afi-x86_64-apple-darwin.tar.gz | awk '{print $1}')"
+            echo "darwin_arm64=$(shasum -a 256 afi-aarch64-apple-darwin.tar.gz | awk '{print $1}')"
+            echo "linux_amd64=$(shasum -a 256 afi-x86_64-unknown-linux-musl.tar.gz | awk '{print $1}')"
+            echo "linux_arm64=$(shasum -a 256 afi-aarch64-unknown-linux-musl.tar.gz | awk '{print $1}')"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Rewrite formula
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA_DARWIN_AMD64: ${{ steps.sha.outputs.darwin_amd64 }}
+          SHA_DARWIN_ARM64: ${{ steps.sha.outputs.darwin_arm64 }}
+          SHA_LINUX_AMD64: ${{ steps.sha.outputs.linux_amd64 }}
+          SHA_LINUX_ARM64: ${{ steps.sha.outputs.linux_arm64 }}
+        run: |
+          set -euo pipefail
+          cat > Formula/afi.rb <<EOF
+          # typed: false
+          # frozen_string_literal: true
+
+          # Rewritten in full by .github/workflows/update-afi-formula.yml on every afi
+          # release. Edit the template in that workflow, not this file, or the next
+          # release will quietly undo you.
+          #
+          # There is deliberately no \`version\` stanza. Homebrew reads the version out of
+          # the \`v${VERSION}\` segment of the URLs, and \`brew audit --strict\` rejects an explicit
+          # one as redundant, so the tag in the URLs is the only place a version appears.
+          class Afi < Formula
+            desc "Deliberately tiny coding agent for self-hosted or remote models"
+            homepage "https://github.com/smykla-skalski/afi"
+            license "MIT"
+
+            on_macos do
+              if Hardware::CPU.intel?
+                url "https://github.com/smykla-skalski/afi/releases/download/v${VERSION}/afi-x86_64-apple-darwin.tar.gz"
+                sha256 "${SHA_DARWIN_AMD64}"
+              end
+              if Hardware::CPU.arm?
+                url "https://github.com/smykla-skalski/afi/releases/download/v${VERSION}/afi-aarch64-apple-darwin.tar.gz"
+                sha256 "${SHA_DARWIN_ARM64}"
+              end
+            end
+
+            # The musl builds on both architectures, not the glibc one afi also publishes.
+            # They are static and declare no dependencies, so they run whatever the host's
+            # glibc turns out to be, which is the same reason afi's own install.sh serves
+            # musl to every Linux.
+            on_linux do
+              if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
+                url "https://github.com/smykla-skalski/afi/releases/download/v${VERSION}/afi-x86_64-unknown-linux-musl.tar.gz"
+                sha256 "${SHA_LINUX_AMD64}"
+              end
+              if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
+                url "https://github.com/smykla-skalski/afi/releases/download/v${VERSION}/afi-aarch64-unknown-linux-musl.tar.gz"
+                sha256 "${SHA_LINUX_ARM64}"
+              end
+            end
+
+            def install
+              bin.install "afi"
+              doc.install "README.md", "CHANGELOG.md"
+            end
+
+            def caveats
+              <<~CAVEATS
+                afi needs an endpoint and a model before it will start:
+
+                  export AFI_BASE_URL=http://localhost:8080/v1
+                  export AFI_MODEL=your-model-name
+                  export AFI_API_KEY=sk-noop
+
+                Configuration reference: https://github.com/smykla-skalski/afi#configuration
+              CAVEATS
+            end
+
+            test do
+              assert_match version.to_s, shell_output("#{bin}/afi --version")
+            end
+          end
+          EOF
+          cat Formula/afi.rb
+
+      # Audit, then actually install it and make the binary say its own version.
+      # `brew audit` reads the formula; only the install proves the URL resolves,
+      # the checksum matches, and the archive contains a binary that runs.
+      - name: Validate formula
+        env:
+          RUN_ID: ${{ github.run_id }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          temp_tap="afi-validation/run-${RUN_ID}"
+          cleanup() {
+            brew uninstall --force afi >/dev/null 2>&1 || true
+            brew untap "${temp_tap}" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          brew tap-new --no-git "${temp_tap}"
+          cp Formula/afi.rb "$(brew --repository "${temp_tap}")/Formula/afi.rb"
+
+          brew audit --strict "${temp_tap}/afi"
+          brew style "${temp_tap}/afi"
+
+          # A leftover keg from another tap makes `brew install` print advice and
+          # exit 0, which would leave the assertion below reading a stale binary.
+          brew uninstall --force afi >/dev/null 2>&1 || true
+          brew install "${temp_tap}/afi"
+
+          # Homebrew scans the version out of the URL, so this path existing is
+          # already half the check; the binary agreeing is the other half.
+          actual="$("$(brew --cellar afi)/${VERSION}/bin/afi" --version | head -1 | awk '{print $2}')"
+          test "${actual}" = "${VERSION}"
+          echo "afi ${actual} installed and reported its own version."
+
+      - name: Commit and push
+        env:
+          APP_SLUG: ${{ steps.homebrew-tap-token.outputs.app-slug }}
+          USER_ID: ${{ steps.github-app-user.outputs.user-id }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${USER_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
+          git add Formula/afi.rb
+          git diff --staged --quiet && exit 0
+          git commit -m "chore(formula): update afi to v${VERSION}" \
+            -m "Automated update triggered by afi release v${VERSION}"
+          git push origin HEAD:main
