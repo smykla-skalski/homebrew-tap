@@ -201,6 +201,18 @@ jobs:
             def install
               bin.install "afi"
               doc.install "README.md", "CHANGELOG.md"
+
+              # Guarded, unlike the same block in the af formula, because this workflow
+              # runs in the *last* job of an afi release - after the crate is published,
+              # which is the one publication a release cannot undo. An archive built
+              # before afi learned to generate these carries only the binary and the
+              # docs, and the tap must not be the thing that fails such a release.
+              return unless (buildpath/"afi.1").exist?
+
+              bash_completion.install "completions/afi.bash" => "afi"
+              fish_completion.install "completions/afi.fish"
+              zsh_completion.install "completions/_afi"
+              man1.install "afi.1"
             end
 
             def caveats
