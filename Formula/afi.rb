@@ -6,7 +6,7 @@
 # release will quietly undo you.
 #
 # There is deliberately no `version` stanza. Homebrew reads the version out of
-# the `v0.22.0` segment of the URLs, and `brew audit --strict` rejects an explicit
+# the `v0.22.1` segment of the URLs, and `brew audit --strict` rejects an explicit
 # one as redundant, so the tag in the URLs is the only place a version appears.
 class Afi < Formula
   desc "Deliberately tiny coding agent for self-hosted or remote models"
@@ -15,12 +15,12 @@ class Afi < Formula
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/smykla-skalski/afi/releases/download/v0.22.0/afi-x86_64-apple-darwin.tar.gz"
-      sha256 "7f08e5583ae4ea3721577b6a53f88f42127f1846d749c8aebf40ce8b57c449dd"
+      url "https://github.com/smykla-skalski/afi/releases/download/v0.22.1/afi-x86_64-apple-darwin.tar.gz"
+      sha256 "68b49443e8fe883fde856374ced50ba379efd7e06173446edbb21da5c55ed881"
     end
     if Hardware::CPU.arm?
-      url "https://github.com/smykla-skalski/afi/releases/download/v0.22.0/afi-aarch64-apple-darwin.tar.gz"
-      sha256 "11283772463479290db58abc76d37764866c19ad420778136f9da54eb4053fe2"
+      url "https://github.com/smykla-skalski/afi/releases/download/v0.22.1/afi-aarch64-apple-darwin.tar.gz"
+      sha256 "200d1961f077c855e9fe4017c3a878298b4141cf2fb423dbd986abfa19ddc8f2"
     end
   end
 
@@ -30,12 +30,12 @@ class Afi < Formula
   # musl to every Linux.
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/smykla-skalski/afi/releases/download/v0.22.0/afi-x86_64-unknown-linux-musl.tar.gz"
-      sha256 "2db6014d851dfda32f666795778856e0b94b7748a6f6339e5332ee20944453c7"
+      url "https://github.com/smykla-skalski/afi/releases/download/v0.22.1/afi-x86_64-unknown-linux-musl.tar.gz"
+      sha256 "4b34a6c64ff95dfe986266e8b84ba3cba418343e155c500da3c8b0b43fa1bf37"
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/smykla-skalski/afi/releases/download/v0.22.0/afi-aarch64-unknown-linux-musl.tar.gz"
-      sha256 "ec2d34943996a5c1f1ddfd8c12e10209e73014486c01705ed6f8cf308170516e"
+      url "https://github.com/smykla-skalski/afi/releases/download/v0.22.1/afi-aarch64-unknown-linux-musl.tar.gz"
+      sha256 "6647e88c56035c9f9eda807968c91407a896d550f39ac1de8e13e6f09843ec96"
     end
   end
 
