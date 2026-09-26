@@ -96,7 +96,6 @@ jobs:
           class Af < Formula
             desc "Afrael's CLI tool"
             homepage "https://github.com/smykla-skalski/af"
-            version "${VERSION}"
             license "MIT"
 
             on_macos do
