@@ -34,7 +34,7 @@ jobs:
       - name: Checkout tap
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
-          token: ${{ steps.homebrew-tap-token.outputs.token }}
+          persist-credentials: false
 
       - name: Generate GitHub App token
         id: github-app-token
@@ -44,13 +44,6 @@ jobs:
           private-key: ${{ secrets.SMYKLOT_APP_PRIVATE_KEY }}
           owner: smykla-skalski
           repositories: klab
-
-      - name: Get Homebrew Tap GitHub App user ID
-        id: github-app-user
-        env:
-          APP_SLUG: ${{ steps.homebrew-tap-token.outputs.app-slug }}
-          GH_TOKEN: ${{ steps.homebrew-tap-token.outputs.token }}
-        run: echo "user-id=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
 
       - name: Set version
         id: version
@@ -100,16 +93,26 @@ jobs:
           echo "Updated formula:"
           cat Formula/klab.rb
 
-      - name: Commit and push
+      - name: Commit
         env:
-          APP_SLUG: ${{ steps.homebrew-tap-token.outputs.app-slug }}
-          USER_ID: ${{ steps.github-app-user.outputs.user-id }}
+          GH_TOKEN: ${{ steps.homebrew-tap-token.outputs.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          git config user.name "${APP_SLUG}[bot]"
-          git config user.email "${USER_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
-          git add Formula/klab.rb
-          git diff --staged --quiet && exit 0
-          git commit -m "chore(formula): update klab to v${VERSION}" \
-            -m "Automated update triggered by klab release v${VERSION}"
-          git push origin HEAD:main
+          set -euo pipefail
+          git diff --quiet -- Formula/klab.rb && exit 0
+          gh api graphql \
+            -f query='mutation($repo: String!, $branch: String!, $head: GitObjectID!, $headline: String!, $body: String!, $contents: Base64String!) {
+              createCommitOnBranch(input: {
+                branch: {repositoryNameWithOwner: $repo, branchName: $branch}
+                expectedHeadOid: $head
+                message: {headline: $headline, body: $body}
+                fileChanges: {additions: [{path: "Formula/klab.rb", contents: $contents}]}
+              }) { commit { url } }
+            }' \
+            -f repo="${GITHUB_REPOSITORY}" \
+            -f branch=main \
+            -f head="$(git rev-parse HEAD)" \
+            -f headline="chore(formula): update klab to v${VERSION}" \
+            -f body="Automated update triggered by klab release v${VERSION}" \
+            -f contents="$(base64 < Formula/klab.rb | tr -d '\n')" \
+            --jq .data.createCommitOnBranch.commit.url
