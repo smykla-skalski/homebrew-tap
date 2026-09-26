@@ -21,11 +21,6 @@ This tap contains Homebrew formulas for various open-source projects:
   - Repository: Public
   - Update method: GitHub Actions workflow
 
-- **[afi](https://github.com/smykla-skalski/afi)** - Deliberately tiny coding agent for self-hosted or remote models
-  - Status: Active
-  - Repository: Public
-  - Update method: GitHub Actions workflow
-
 ## Installation
 
 ### From This Tap
@@ -36,7 +31,6 @@ brew install smykla-skalski/tap/<formula-name>
 
 # Examples:
 brew install smykla-skalski/tap/af
-brew install smykla-skalski/tap/afi
 brew install smykla-skalski/tap/klab
 brew install smykla-skalski/tap/klaudiush
 ```
@@ -63,9 +57,6 @@ After installation, verify the formula works:
 # af
 af --version
 
-# afi
-afi --version
-
 # klab
 klab version
 
@@ -84,7 +75,6 @@ brew upgrade <formula-name>
 
 # Examples:
 brew upgrade af
-brew upgrade afi
 brew upgrade klab
 brew upgrade klaudiush
 ```
@@ -96,7 +86,6 @@ brew uninstall <formula-name>
 
 # Examples:
 brew uninstall af
-brew uninstall afi
 brew uninstall klab
 brew uninstall klaudiush
 ```
@@ -137,7 +126,6 @@ For issues with specific projects:
 - **klab**: [smykla-skalski/klab/issues](https://github.com/smykla-skalski/klab/issues)
 - **klaudiush**: [smykla-skalski/klaudiush/issues](https://github.com/smykla-skalski/klaudiush/issues)
 - **af**: [smykla-skalski/af/issues](https://github.com/smykla-skalski/af/issues)
-- **afi**: [smykla-skalski/afi/issues](https://github.com/smykla-skalski/afi/issues)
 
 For tap-related issues or to report formula problems: [Create an issue in this repository](https://github.com/smykla-skalski/homebrew-tap/issues)
 
