@@ -9,8 +9,8 @@ class Af < Formula
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/smykla-skalski/af/releases/download/v0.11.176/af_0.11.176_darwin_amd64.tar.gz"
-      sha256 "5340a9d77f1e1c0a643d8ab21d588f61ed81af0065239c4858346fb4e11f09f8"
+      url "https://github.com/smykla-skalski/af/archive/refs/tags/v0.11.177.tar.gz"
+      sha256 "b77d41ecdebb9a05a0d8ec4a77c26dbd88d1cfc3e9a3db30e4feda3f05989952"
     end
     if Hardware::CPU.arm?
       url "https://github.com/smykla-skalski/af/releases/download/v0.11.176/af_0.11.176_darwin_arm64.tar.gz"
