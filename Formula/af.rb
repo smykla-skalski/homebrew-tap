@@ -8,23 +8,23 @@ class Af < Formula
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/smykla-skalski/af/releases/download/v0.11.177/af_0.11.177_darwin_amd64.tar.gz"
-      sha256 "e65f389818ffee56dceeddaab942f5bd2329b77d992c41eb181ec071b4e251a2"
+      url "https://github.com/smykla-skalski/af/releases/download/v0.11.178/af_0.11.178_darwin_amd64.tar.gz"
+      sha256 "488ebef646bb259c9b9660993aefbd193af760bf0d2f410f3fb794e0ae17b58f"
     end
     if Hardware::CPU.arm?
-      url "https://github.com/smykla-skalski/af/releases/download/v0.11.177/af_0.11.177_darwin_arm64.tar.gz"
-      sha256 "9ac0dee586460bcc01b9a17aadc4b5fe54b4c30e263ec022f79405c99a7103d9"
+      url "https://github.com/smykla-skalski/af/releases/download/v0.11.178/af_0.11.178_darwin_arm64.tar.gz"
+      sha256 "6816bedacf75796bff89cba22b0450bc29c32ea9b1cbc255e31f9d09799137fd"
     end
   end
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/smykla-skalski/af/releases/download/v0.11.177/af_0.11.177_linux_amd64.tar.gz"
-      sha256 "a8cf64e585df0bf75f2d4b522f9d9248fd0f9dede6707cda76e7cb022d269228"
+      url "https://github.com/smykla-skalski/af/releases/download/v0.11.178/af_0.11.178_linux_amd64.tar.gz"
+      sha256 "6ab803e06273c7055618edf58c22801ad4862bb25e1ed0036c28d541576d7740"
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/smykla-skalski/af/releases/download/v0.11.177/af_0.11.177_linux_arm64.tar.gz"
-      sha256 "b04c96a2204c65d84adbb688eb67fc5d8926855fb23e33f6884304a23d1e099f"
+      url "https://github.com/smykla-skalski/af/releases/download/v0.11.178/af_0.11.178_linux_arm64.tar.gz"
+      sha256 "6462d53c6e9858bb8f568007746cc969a20b9125bb169e8fc094897d90fe3cf0"
     end
   end
 
