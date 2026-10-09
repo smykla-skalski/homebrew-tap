@@ -4,7 +4,6 @@
 class Reef < Formula
   desc "Observe and schedule resource-heavy coding-agent work"
   homepage "https://github.com/smykla-skalski/reef"
-  version "0.0.1"
   license "MIT"
 
   on_macos do
