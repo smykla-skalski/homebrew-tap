@@ -21,6 +21,11 @@ This tap contains Homebrew formulas for various open-source projects:
   - Repository: Public
   - Update method: GitHub Actions workflow
 
+- **[reef](https://github.com/smykla-skalski/reef)** - Resource observation and scheduling for coding agents
+  - Status: Active
+  - Repository: Public
+  - Update method: Manual release formula update
+
 ## Installation
 
 ### From This Tap
@@ -33,6 +38,7 @@ brew install smykla-skalski/tap/<formula-name>
 brew install smykla-skalski/tap/af
 brew install smykla-skalski/tap/klab
 brew install smykla-skalski/tap/klaudiush
+brew install smykla-skalski/tap/reef
 ```
 
 ### Special Requirements
@@ -62,6 +68,9 @@ klab version
 
 # klaudiush
 klaudiush --version
+
+# reef
+reef --version
 ```
 
 ## Updating
@@ -77,6 +86,7 @@ brew upgrade <formula-name>
 brew upgrade af
 brew upgrade klab
 brew upgrade klaudiush
+brew upgrade reef
 ```
 
 ## Uninstalling
@@ -88,14 +98,17 @@ brew uninstall <formula-name>
 brew uninstall af
 brew uninstall klab
 brew uninstall klaudiush
+brew uninstall reef
 ```
 
 ## Automated Updates
 
-Formulas in this tap are automatically updated when new releases are published:
+Some formulas in this tap are automatically updated when new releases are published:
 
 - **GitHub Actions triggered**: For repositories using custom release workflows
 - **GoReleaser**: For projects using GoReleaser for automated releases
+
+Reef currently requires a manual formula update for each release.
 
 ## Troubleshooting
 
