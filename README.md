@@ -103,10 +103,12 @@ brew uninstall reef
 
 ## Automated Updates
 
-Formulas in this tap are automatically updated when new releases are published:
+Some formulas in this tap are automatically updated when new releases are published:
 
 - **GitHub Actions triggered**: For repositories using custom release workflows
 - **GoReleaser**: For projects using GoReleaser for automated releases
+
+Reef currently requires a manual formula update for each release.
 
 ## Troubleshooting
 
