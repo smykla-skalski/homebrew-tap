@@ -24,7 +24,7 @@ This tap contains Homebrew formulas for various open-source projects:
 - **[reef](https://github.com/smykla-skalski/reef)** - Resource observation and scheduling for coding agents
   - Status: Active
   - Repository: Public
-  - Update method: Manual release formula update
+  - Update method: GitHub Actions opens a formula PR after each release
 
 ## Installation
 
@@ -108,7 +108,7 @@ Some formulas in this tap are automatically updated when new releases are publis
 - **GitHub Actions triggered**: For repositories using custom release workflows
 - **GoReleaser**: For projects using GoReleaser for automated releases
 
-Reef currently requires a manual formula update for each release.
+Reef publishes a `reef-release` event after its release assets are available. A daily tap check catches a missed event. The tap downloads the archives, verifies `SHA256SUMS`, audits and installs the updated formula, then opens a signed formula PR for review. The workflow can also be started manually with a published version. A release is available through Homebrew after that PR merges and users run `brew update` and `brew upgrade reef`.
 
 ## Troubleshooting
 

@@ -1,0 +1,131 @@
+---
+name: Update Reef formula
+
+'on':
+  schedule:
+    - cron: '17 7 * * *'
+  repository_dispatch:
+    types: [reef-release]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Published Reef version, without the v prefix
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update-reef-formula
+  cancel-in-progress: false
+
+jobs:
+  update-formula:
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-15
+    steps:
+      - name: Checkout tap
+        # actions/checkout v7.0.1
+        uses: >-
+          actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Validate release version
+        id: version
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          PAYLOAD_VERSION: ${{ github.event.client_payload.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            version="$INPUT_VERSION"
+          elif [[ "$EVENT_NAME" == schedule ]]; then
+            tag=$(gh release view --repo smykla-skalski/reef \
+              --json tagName --jq .tagName)
+            version="${tag#v}"
+          else
+            version="$PAYLOAD_VERSION"
+          fi
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Download and verify Reef release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          set -euo pipefail
+          gh release view "v$VERSION" --repo smykla-skalski/reef \
+            --json isDraft --jq .isDraft | grep -qx false
+          gh release download "v$VERSION" --repo smykla-skalski/reef \
+            --pattern 'reef-*.tar.gz' --pattern SHA256SUMS
+          shasum -a 256 -c SHA256SUMS
+
+      - name: Update and test formula
+        id: formula
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+          PYTHONPATH: .github/scripts
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s .github/tests -p 'test_*.py'
+          python3 .github/scripts/update_reef_formula.py "$VERSION"
+          ruby -c Formula/reef.rb
+          if git diff --quiet -- Formula/reef.rb; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Audit and install updated formula
+        if: steps.formula.outputs.changed == 'true'
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+          HOMEBREW_NO_INSTALL_FROM_API: "1"
+        run: |
+          set -euo pipefail
+          temp_tap="codex-local/reef-validation-${GITHUB_RUN_ID}"
+          cleanup() {
+            brew uninstall "${temp_tap}/reef" >/dev/null 2>&1 || true
+            brew untap "$temp_tap" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          brew tap-new "$temp_tap"
+          tap_root="$(brew --repository "$temp_tap")"
+          cp Formula/reef.rb "$tap_root/Formula/reef.rb"
+          brew audit --strict "${temp_tap}/reef"
+          brew install "${temp_tap}/reef"
+          brew test "${temp_tap}/reef"
+          installed="$(brew --prefix "$temp_tap/reef")"
+          test "$("$installed/bin/reef" --version)" = "reef $VERSION"
+
+      - name: Generate tap PR token
+        if: steps.formula.outputs.changed == 'true'
+        id: tap-token
+        # actions/create-github-app-token v3.2.0
+        uses: >-
+          actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          app-id: ${{ vars.SMYKLOT_APP_ID }}
+          private-key: ${{ secrets.SMYKLOT_APP_PRIVATE_KEY }}
+          owner: smykla-skalski
+          repositories: homebrew-tap
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Open signed formula update PR
+        if: steps.formula.outputs.changed == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.tap-token.outputs.token }}
+          VERSION: ${{ steps.version.outputs.value }}
+        run: bash .github/scripts/open_reef_formula_pr.sh
