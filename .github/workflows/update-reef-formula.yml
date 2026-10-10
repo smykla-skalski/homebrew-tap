@@ -45,8 +45,8 @@ jobs:
           if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
             version="$INPUT_VERSION"
           elif [[ "$EVENT_NAME" == schedule ]]; then
-            tag=$(gh release view --repo smykla-skalski/reef \
-              --json tagName --jq .tagName)
+            tag=$(gh api repos/smykla-skalski/reef/releases/latest \
+              --jq .tag_name)
             version="${tag#v}"
           else
             version="$PAYLOAD_VERSION"
@@ -61,8 +61,8 @@ jobs:
           VERSION: ${{ steps.version.outputs.value }}
         run: |
           set -euo pipefail
-          gh release view "v$VERSION" --repo smykla-skalski/reef \
-            --json isDraft --jq .isDraft | grep -qx false
+          gh api "repos/smykla-skalski/reef/releases/tags/v$VERSION" \
+            --jq .draft | grep -qx false
           gh release download "v$VERSION" --repo smykla-skalski/reef \
             --pattern 'reef-*.tar.gz' --pattern SHA256SUMS
           shasum -a 256 -c SHA256SUMS
