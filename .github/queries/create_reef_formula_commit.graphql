@@ -1,0 +1,8 @@
+mutation($repo: String!, $branch: String!, $head: GitObjectID!, $contents: Base64String!, $headline: String!) {
+  createCommitOnBranch(input: {
+    branch: {repositoryNameWithOwner: $repo, branchName: $branch}
+    expectedHeadOid: $head
+    message: {headline: $headline, body: "Signed-off-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"}
+    fileChanges: {additions: [{path: "Formula/reef.rb", contents: $contents}]}
+  }) { commit { oid } }
+}
