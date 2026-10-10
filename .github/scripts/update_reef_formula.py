@@ -1,10 +1,8 @@
-#!/usr/bin/env python3
 """Update Reef's formula from a verified release checksum manifest."""
 
 import re
 import sys
 from pathlib import Path
-
 
 ASSETS = (
     "reef-macos-arm64.tar.gz",
@@ -27,7 +25,9 @@ def parse_checksums(manifest: str) -> dict[str, str]:
             raise ValueError(f"unexpected or duplicate release asset: {asset}")
         checksums[asset] = checksum
     if set(checksums) != set(ASSETS):
-        raise ValueError(f"missing release assets: {sorted(set(ASSETS) - set(checksums))}")
+        raise ValueError(
+            f"missing release assets: {sorted(set(ASSETS) - set(checksums))}"
+        )
     return checksums
 
 
@@ -49,12 +49,12 @@ def update_formula(formula: str, version: str, checksums: dict[str, str]) -> str
             r'(url "https://github\.com/smykla-skalski/reef/releases/download/v)'
             r"[0-9]+\.[0-9]+\.[0-9]+"
             rf'(/{re.escape(asset)}"\n\s*sha256 ")'
-            r'[0-9a-f]{64}(\")'
+            r"[0-9a-f]{64}(\")"
         )
         formula, count = pattern.subn(
-            lambda match: (
+            lambda match, release_asset=asset: (
                 f"{match.group(1)}{version}{match.group(2)}"
-                f"{checksums[asset]}{match.group(3)}"
+                f"{checksums[release_asset]}{match.group(3)}"
             ),
             formula,
         )
