@@ -8,20 +8,20 @@ class Reef < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/smykla-skalski/reef/releases/download/v0.0.8/reef-macos-arm64.tar.gz"
-      sha256 "65d4990a1426767a761f1d8fd2111295bd136e135f29b99908bfeb1964da515e"
+      url "https://github.com/smykla-skalski/reef/releases/download/v0.0.9/reef-macos-arm64.tar.gz"
+      sha256 "5748ae714673e23bc0aad91f9b468d52fe7618138eff4fe6e20e56f61cdaadbc"
     end
 
     if Hardware::CPU.intel?
-      url "https://github.com/smykla-skalski/reef/releases/download/v0.0.8/reef-macos-x86_64.tar.gz"
-      sha256 "866a1c54785375004255b97c5c372714afd58cbab10a71f7431b3aa93065d63c"
+      url "https://github.com/smykla-skalski/reef/releases/download/v0.0.9/reef-macos-x86_64.tar.gz"
+      sha256 "2c12edb76b7a6a44fde3b841adf184ec058083f837ff55d85d7fe6bb1ba3b89a"
     end
   end
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/smykla-skalski/reef/releases/download/v0.0.8/reef-linux-x86_64.tar.gz"
-      sha256 "e5a9e50afead41e908b8e53d5a29e62e778ad5e3bac402914809734b7bd601be"
+      url "https://github.com/smykla-skalski/reef/releases/download/v0.0.9/reef-linux-x86_64.tar.gz"
+      sha256 "dc4064d159eb5356f84672cb60c092e491b6593d13bd4e11f826ba8e249fc2a7"
     end
   end
 
@@ -30,6 +30,6 @@ class Reef < Formula
   end
 
   test do
-    assert_match "reef 0.0.8", shell_output("#{bin}/reef --version")
+    assert_match "reef 0.0.9", shell_output("#{bin}/reef --version")
   end
 end
