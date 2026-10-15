@@ -5,13 +5,13 @@
 class Bilgie < Formula
   desc "Disk-pressure janitor for dev machines running many agents"
   homepage "https://github.com/smykla-skalski/bilgie"
-  version "0.11.0"
+  version "0.12.0"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/smykla-skalski/bilgie/releases/download/v0.11.0/bilgie_0.11.0_darwin_amd64.tar.gz"
-      sha256 "9d93eb7957fd37ebc9c1df0a92299f1684720128ba0846a1929df380106b2d06"
+      url "https://github.com/smykla-skalski/bilgie/releases/download/v0.12.0/bilgie_0.12.0_darwin_amd64.tar.gz"
+      sha256 "21fd41d35a6ae2e07a96de85fb5f799a3e9f0cc175ef170d83fd4d2a53f0f71d"
 
       define_method(:install) do
         bin.install "bilgie"
@@ -19,8 +19,8 @@ class Bilgie < Formula
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/smykla-skalski/bilgie/releases/download/v0.11.0/bilgie_0.11.0_darwin_arm64.tar.gz"
-      sha256 "08ae71787221a183c75480be00cc02824feceb16453a8ee83e20ccff0266f7cc"
+      url "https://github.com/smykla-skalski/bilgie/releases/download/v0.12.0/bilgie_0.12.0_darwin_arm64.tar.gz"
+      sha256 "7c938bb54cb8a268a2fbb1a0929e44e68aed723bb3902b8ceb7d7491ed9f8ec7"
 
       define_method(:install) do
         bin.install "bilgie"
@@ -31,16 +31,16 @@ class Bilgie < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/smykla-skalski/bilgie/releases/download/v0.11.0/bilgie_0.11.0_linux_amd64.tar.gz"
-      sha256 "4eff3962636a14ca7f4512f578c9bbc9df970e705009c55cceeda8ef07ab857e"
+      url "https://github.com/smykla-skalski/bilgie/releases/download/v0.12.0/bilgie_0.12.0_linux_amd64.tar.gz"
+      sha256 "728783583f1026c967289eaa120a9e1e5d59fef05e090d206d884a13c2408f9f"
       define_method(:install) do
         bin.install "bilgie"
         generate_completions_from_executable(bin/"bilgie", "completion")
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/smykla-skalski/bilgie/releases/download/v0.11.0/bilgie_0.11.0_linux_arm64.tar.gz"
-      sha256 "c53d2b3b4bc5312c03b63a09d43043e497276faff2bc01e247d4f753206f445a"
+      url "https://github.com/smykla-skalski/bilgie/releases/download/v0.12.0/bilgie_0.12.0_linux_arm64.tar.gz"
+      sha256 "d24771ae13dd46dfde31a779a61293fbf561c263c692c02ed1fe0c181d143794"
       define_method(:install) do
         bin.install "bilgie"
         generate_completions_from_executable(bin/"bilgie", "completion")
