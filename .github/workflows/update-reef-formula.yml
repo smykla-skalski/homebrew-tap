@@ -103,6 +103,9 @@ jobs:
           tap_root="$(brew --repository "$temp_tap")"
           cp Formula/reef.rb "$tap_root/Formula/reef.rb"
           brew audit --strict "${temp_tap}/reef"
+          # readall skips an untrusted tap with only a warning.
+          brew trust "$temp_tap"
+          brew readall --os=all --arch=all "$temp_tap"
           brew install "${temp_tap}/reef"
           brew test "${temp_tap}/reef"
           installed="$(brew --prefix "$temp_tap/reef")"

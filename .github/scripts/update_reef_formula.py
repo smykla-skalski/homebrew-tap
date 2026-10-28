@@ -8,6 +8,7 @@ ASSETS = (
     "reef-macos-arm64.tar.gz",
     "reef-macos-x86_64.tar.gz",
     "reef-linux-x86_64.tar.gz",
+    "reef-linux-arm64.tar.gz",
     "reef-windows-x86_64.tar.gz",
 )
 VERSION = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+\Z")
@@ -35,7 +36,7 @@ def update_formula(formula: str, version: str, checksums: dict[str, str]) -> str
     if not VERSION.fullmatch(version):
         raise ValueError(f"invalid Reef version: {version}")
     current = re.findall(r"releases/download/v([0-9]+\.[0-9]+\.[0-9]+)/reef-", formula)
-    if len(current) != 3 or len(set(current)) != 1:
+    if len(current) != len(ASSETS) - 1 or len(set(current)) != 1:
         raise ValueError("formula release versions disagree")
     if tuple(map(int, version.split("."))) < tuple(map(int, current[0].split("."))):
         raise ValueError(f"refusing to downgrade Reef from {current[0]} to {version}")
