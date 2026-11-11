@@ -1,7 +1,7 @@
 # typed: false
 # frozen_string_literal: true
 
-require_relative "../custom_download_strategy"
+require_relative "../lib/custom_download_strategy"
 
 # Homebrew formula for klab - Kubernetes networking troubleshooting lab framework
 class Klab < Formula
